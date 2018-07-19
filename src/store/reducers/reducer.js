@@ -13,7 +13,7 @@ import {
 
 } from "../actions/actionNames";
 const initialState = {
-    isLoggedIn:true,
+    isLoggedIn:false,
     showQuiz:false,
     showQuestions:false,
     Quizzes:[],
