@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
 import './Admin.css'
-import { Logout,showQuizModalAction } from "../store/actions/actions";
+import { Logout,showQuizModalAction,showQuestionsModalAction,addQuizAction,putQuizQuestionsAction,addUserInStoreAction,showUserDetailsAction } from "../store/actions/actions";
 import firebase from 'firebase'
 import Modal from 'react-responsive-modal'
+import QuestionsModal from './QuestionsModal'
 import QuizModal from './QuizModal'
+import UserDetailModal from './UserDetailModal'
 class Admin extends Component {
     constructor(props){
         super(props)
@@ -12,7 +14,9 @@ class Admin extends Component {
             openUserModal:false,
             email:'',
             pw:'',
-            name:''
+            name:'',
+            showQuestionsList:false,
+            showUsersList:false
         }
     }
     componentWillMount(){
@@ -27,6 +31,46 @@ class Admin extends Component {
             };
             firebase.initializeApp(config);
         }
+        let firebaseRef = firebase.database().ref('quizzes')
+        firebaseRef.on('value',(snap)=>{
+            snap.forEach((Key)=>{
+              let dataRef = firebaseRef.child(Key.ref.key).key
+            //   console.log(dataRef)
+            let databaseRef = firebase.database().ref('quizzes').child(dataRef)
+            databaseRef.on('value',(snap)=>{
+                let quiz = snap.val()
+                this.props.addQuiz(quiz)
+                console.log(this.props.Quizzes)
+                if(this.state.showQuestionsList===false)
+                this.setState({
+                    showQuestionsList:true
+                })
+            })
+
+            })
+        })
+        let firebaseUsersRef = firebase.database().ref('quizAppUsers')
+        firebaseUsersRef.on('value',(snap)=>{
+                snap.forEach((Key)=>{
+                  let dataRef = firebaseRef.child(Key.ref.key).key
+                  let data = snap.child(dataRef).val()
+                //   console.log(data) //Data is an object {email:'abc@xyz.com',pw:'12345',name:'abc'}
+                this.props.addUserInStore(data)
+                if(this.state.showUsersList===false)
+                this.setState({
+                    showUsersList:true
+                })
+                })
+            })
+    }
+    enableUserDetailModal(e,index){
+        this.props.showUserDetails(index)
+    }
+    handleModalQuestions(e,index){
+        e.preventDefault()
+        // console.log(index)
+        this.props.putQuizQuestions(index)
+        this.props.showQuestionsModal()
     }
     handleSignup(e){
         e.preventDefault()
@@ -43,6 +87,8 @@ class Admin extends Component {
                 this.setState({
                     openUserModal:false
                 })
+                // window.location='localhost:/admin'
+                window.location.reload()
             }).catch(err=>{
                 console.log(err)
             })
@@ -90,7 +136,6 @@ class Admin extends Component {
         }
         else
         return (
-            <div className='container'>
             <div>
             <nav className="navbar navbar-inverse">
             <div className="container-fluid">
@@ -102,20 +147,52 @@ class Admin extends Component {
               </ul>
             </div>
           </nav>
-            </div>
+        <div className='container'>
           
           <div className="row">
           <div className="col-md-2"></div>
           <div className="col-md-3">
           <button
            onClick={this.enableQuizModal.bind(this)}
-          className='btn btn-lg btn-info'>CREATE QUIZ</button>
+           className='btn btn-lg btn-info'>CREATE QUIZ</button>
           </div>
           <div className="col-md-1"></div>
           <div className="col-md-3">
-          <button onClick={this.enableUserModal.bind(this)} className='btn btn-lg btn-primary'>CREATE USER</button>
+
           </div>
-          <div className="col-md-2"></div>
+          <div className="col-md-2"><button onClick={this.enableUserModal.bind(this)} className='btn btn-lg btn-primary'>CREATE USER</button></div>
+          </div>
+          <br/>
+          <br/>
+          <div className="row">
+          <div className="col-md-6" style={{backgroundColor:'rgba(209, 202, 202, 0.35)',borderRadius:20}}>
+          <h2 style={{textAlign:'center',textDecoration:'underline'}}>QUIZZES</h2>
+          <br/>
+          <br/>
+          {this.state.showQuestionsList&& <ul className='list-group'>
+            {this.props.Quizzes.map((Quiz,index)=>{
+                return <li key={index} className='list-group-item list-group-item-success' style={{padding:10,margin:5,borderRadius:10,fontSize:16,fontWeight:'bolder'}}>{Quiz.name}
+                <span key={index} onClick={e=>this.handleModalQuestions(e,index)} className='badge btn'>SHOW</span>
+                </li>
+            })}
+          </ul>}
+          </div>
+          <div className="col-md-3"></div>
+          <div className="col-md-3" style={{backgroundColor:'rgba(119, 105, 197, 0.15)',borderRadius:20}}>
+          <h2 style={{textAlign:'center',textDecoration:'underline'}}>USERS</h2>
+          <br/>
+          <br/>
+          {this.state.showUsersList && 
+          <ul className='list-group'>
+            {this.props.Users.map((User,index)=>{
+                 return <li key={index} className='list-group-item list-group-item-info' style={{padding:10,borderRadius:10,margin:5,fontSize:16,fontWeight:'bolder'}}>{User.email}
+                 <span onClick={e=>this.enableUserDetailModal(e,index)} key={index} className='badge btn'>SHOW</span>
+                 </li>
+            })}
+          </ul>
+          
+          }
+          </div>
           </div>
           <Modal open={this.state.openUserModal} onClose={this.onCloseModal.bind(this)} little><br /><br />
                     <div className="form-horizontal">
@@ -155,6 +232,9 @@ class Admin extends Component {
                 </Modal>
                 <QuizModal
                 />
+                <QuestionsModal/>
+                <UserDetailModal/>
+                </div>
             </div>
         )
     }
@@ -162,7 +242,9 @@ class Admin extends Component {
 
 function mapStateToProps(state){
     return({
-        isLoggedIn:state.rootReducer.isLoggedIn
+        isLoggedIn:state.rootReducer.isLoggedIn,
+        Quizzes:state.rootReducer.Quizzes,
+        Users:state.rootReducer.Users
     })
 }
 
@@ -176,6 +258,21 @@ function mapActionsToProps(dispatch){
         },
         showQuizModal:()=>{
             dispatch(showQuizModalAction())
+        },
+        showQuestionsModal:()=>{
+            dispatch(showQuestionsModalAction())
+        },
+        addQuiz:(Quiz)=>{
+            dispatch(addQuizAction(Quiz))
+        },
+        putQuizQuestions:(index)=>{
+            dispatch(putQuizQuestionsAction(index))
+        },
+        addUserInStore:(User)=>{
+            dispatch(addUserInStoreAction(User))
+        },
+        showUserDetails:(index)=>{
+            dispatch(showUserDetailsAction(index))
         }
     })
 }

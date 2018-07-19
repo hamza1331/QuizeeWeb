@@ -68,6 +68,7 @@ class QuizModal extends Component {
             questions:[]
             })
             this.props.hideQuizModal()
+            window.location.reload()
         }).catch((err)=>{
             console.log(err)
         })
@@ -228,3 +229,10 @@ function mapActionsToProps(dispatch){
     })
 }
 export default connect(mapStateToProps,mapActionsToProps)(QuizModal)
+/*
+****************Remaining Tasks*****************
+1. Setting Layout for Quizzes and Users
+2. Retrieving Data
+3. Mapping data accordingly...
+4. Making Redux and Firebase persistence...
+*/
