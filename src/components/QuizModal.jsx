@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import firebase from 'firebase'
 import { connect } from "react-redux";
 import Modal from 'react-responsive-modal'
-import { hideQuizModalAction } from "../store/actions/actions";
+import { hideQuizModalAction,addQuizAction } from "../store/actions/actions";
 class QuizModal extends Component {
     constructor(props){
         super(props)
@@ -67,8 +67,9 @@ class QuizModal extends Component {
             correctAnswer:'',
             questions:[]
             })
+            this.props.addQuiz(data)
             this.props.hideQuizModal()
-            window.location.reload()
+            // window.location.reload()
         }).catch((err)=>{
             console.log(err)
         })
@@ -225,6 +226,9 @@ function mapActionsToProps(dispatch){
         // }
         hideQuizModal:()=>{
             dispatch(hideQuizModalAction())
+        },
+        addQuiz:(Quiz)=>{
+            dispatch(addQuizAction(Quiz))
         }
     })
 }

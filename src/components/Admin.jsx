@@ -32,12 +32,12 @@ class Admin extends Component {
             firebase.initializeApp(config);
         }
         let firebaseRef = firebase.database().ref('quizzes')
-        firebaseRef.on('value',(snap)=>{
+        firebaseRef.once('value',(snap)=>{
             snap.forEach((Key)=>{
               let dataRef = firebaseRef.child(Key.ref.key).key
             //   console.log(dataRef)
             let databaseRef = firebase.database().ref('quizzes').child(dataRef)
-            databaseRef.on('value',(snap)=>{
+            databaseRef.once('value',(snap)=>{
                 let quiz = snap.val()
                 this.props.addQuiz(quiz)
                 console.log(this.props.Quizzes)
@@ -50,7 +50,7 @@ class Admin extends Component {
             })
         })
         let firebaseUsersRef = firebase.database().ref('quizAppUsers')
-        firebaseUsersRef.on('value',(snap)=>{
+        firebaseUsersRef.once('value',(snap)=>{
                 snap.forEach((Key)=>{
                   let dataRef = firebaseRef.child(Key.ref.key).key
                   let data = snap.child(dataRef).val()
@@ -87,8 +87,8 @@ class Admin extends Component {
                 this.setState({
                     openUserModal:false
                 })
+                this.props.addUserInStore(userData)
                 // window.location='localhost:/admin'
-                window.location.reload()
             }).catch(err=>{
                 console.log(err)
             })
